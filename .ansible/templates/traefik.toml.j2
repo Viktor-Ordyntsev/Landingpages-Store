@@ -1,0 +1,24 @@
+################
+#ansible-managed
+################
+
+[entryPoints]
+  [entryPoints.web]
+    address = ":80"
+  [entryPoints.websecure]
+    address = ":443"
+
+[providers]
+  [providers.docker]
+    endpoint = "unix:///var/run/docker.sock"
+    exposedByDefault = false
+    watch = true
+#  [providers.file]
+#    directory = "/etc/traefik/dynamic"
+#    watch = true
+
+[certificatesResolvers.le.acme]
+  email = "admin@e-queo.net"
+  storage = "/etc/traefik/acme.json"
+  keyType = "EC256"
+  [certificatesResolvers.le.acme.tlsChallenge]

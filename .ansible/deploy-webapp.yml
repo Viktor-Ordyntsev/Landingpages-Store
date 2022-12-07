@@ -1,0 +1,83 @@
+- hosts:
+    - landings_host
+  vars_files:
+    - ./inventory/group_vars/vars.yml
+
+  tasks:
+    - name: Check necessary directories existence
+      file:
+        path: "{{ item }}"
+        state: directory
+      with_items:
+        - "{{ nginx_configs_dir }}"
+        - "{{ nginx_pages_dir }}"
+        - "{{ traefik_dir }}"
+        - "{{ nginx_pages_dir }}/blank_site"
+
+    - name: Generate traefik config
+      template:
+        src: templates/traefik.toml.j2
+        dest: '{{ traefik_config }}'
+
+    - name: Generate traefik certificates storage
+      file:
+        path: '{{ traefik_certs }}'
+        state: touch
+        mode: '0600'
+  
+    - name: Generate nginx config
+      template:
+        src: templates/nginx.conf.j2
+        dest: '{{ nginx_files_dir }}/nginx.conf'
+
+    - name: Generate default page for blank sites
+      template:
+        src: templates/default.html.j2
+        dest: '{{ nginx_pages_dir }}/blank_site/default.html'
+
+    - name: Generate default config (for blank sites or 404)
+      template:
+        src: templates/blank_site.conf.j2
+        dest: '{{ nginx_configs_dir }}/blank_site.conf'
+
+    - name: Generate nginx virtual host config
+      template:
+        src: templates/nginx-vhost.conf.j2
+        dest: '{{ nginx_configs_dir }}/{{ server_name }}.conf'
+
+    - name: Copy virtual host files
+      synchronize:
+        src: '../dist/'
+        dest: '{{ nginx_pages_dir }}/{{ server_name }}'
+  
+    - name: Generate docker-compose file
+      template:
+        src: templates/docker-compose.yml.j2
+        dest: '{{ landings_dir }}/docker-compose.yml'
+        force: no
+
+    - name: Start traefik
+      shell: docker-compose up -d "{{ traefik_service }}"
+      args:
+        chdir: '{{ landings_dir }}'
+
+    - name: Append new virtual host labels into docker-compose.yml
+      shell: |
+        nidn={{ non_idn_server_name }}
+        if grep -w "#$nidn" {{ landings_dir }}/docker-compose.yml; then exit 0; fi
+        x={{ server_name }}
+        y=$(echo $x | sed 's/\./-/g')
+        z=\`$x\`
+        a="##new_virtual_hosts_labels_here##"
+        sed -i '/'"$a"'/s/.*/'"#"$nidn"\n"$a'/' {{ landings_dir }}/docker-compose.yml
+        b="      - \""traefik.http.routers.$y.entrypoints=websecure\""\n"
+        c="      - \""traefik.http.routers.$y.rule=Host"("$z")"\""\n"
+        d="      - \""traefik.http.routers.$y.tls=true\""\n"
+        e="      - \""traefik.http.routers.$y.tls.certresolver=le\""\n"
+        g=$b$c$d$e$a
+        sed -i '/'"$a"'/s/.*/'"$g"'/' {{ landings_dir }}/docker-compose.yml
+
+    - name: Start nginx
+      shell: docker-compose up -d "{{ nginx_service }}"
+      args:
+        chdir: '{{ landings_dir }}'

@@ -1,0 +1,11 @@
+################
+#ansible-managed
+################
+
+server {
+  listen {{ nginx_port }} default_server;
+  server_name default_server;
+  
+  root /var/apps/blank_site;
+  index default.html;
+}
