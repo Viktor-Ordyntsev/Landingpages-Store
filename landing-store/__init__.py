@@ -1,6 +1,5 @@
 from flask import *
-import zipfile
-
+import logic_modul as lm
 
 app = Flask(__name__)
 
@@ -15,11 +14,13 @@ def upload():
         tp = f.filename.split(".")
         if tp[1] == "zip":
             f.save(f"pages/{f.filename}")
-            return render_template("index.html", name = f.filename)
+            lm.Unzipping(f.filename)
+            if lm.index_file_search(f.filename):
+                return render_template("index.html", name = f.filename)
         else:
             return render_template("index.html", name = "Файл не правильного формата")
 
     
 
 if __name__ == "__main__":
-    app.run(port=8080)
+    app.run(port=8566)
