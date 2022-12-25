@@ -1,0 +1,16 @@
+[tool.poetry]
+name = "landingpages-store"
+version = "0.1.0"
+description = ""
+authors = ["Viktor Ordynzev <disc.adm@yandex.ru>"]
+readme = "README.md"
+packages = [{include = "landingpages_store"}]
+
+[tool.poetry.dependencies]
+python = "^3.11"
+flask = "^2.2.2"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

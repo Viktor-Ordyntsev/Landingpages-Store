@@ -1,0 +1,2 @@
+def logic():
+    print("hello")
