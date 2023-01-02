@@ -68,7 +68,12 @@ def Domain_check(domain: str) -> bool:
         return False
 
 
-# def Cyrillic_to_Punycode_conversion(Cyrillic_domain: str) -> str:
-#     return Cyrillic_domain.encode('idna').decode()
+def Cyrillic_to_Punycode_conversion(Cyrillic_domain: str) -> str:
+    return Cyrillic_domain.encode('idna').decode()
 
-# print(Cyrillic_to_Punycode_conversion('Лендинг.рф'))
+
+def Checking_domain_foк_Cyrillic(Cyrillic_domain: str) -> bool:
+    alphabet = {"а", "б", "в", "г", "д", "е", "ё", "ж", "з", "и", "й", "к", "л", "м", "н", "о",
+                "п", "р", "с", "т", "у", "ф", "х", "ц", "ч", "ш", "щ", "ъ", "ы", "ь", "э", "ю", "я"}
+
+    return bool(alphabet.intersection(set(Cyrillic_domain.lower())))

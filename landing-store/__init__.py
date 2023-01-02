@@ -18,6 +18,9 @@ def upload():
         file = request.files['landing_zipped_file']
         domain_name = request.form['domain_name']
         name_file = file.filename.split(".")
+        
+        if (lm.Checking_domain_foк_Cyrillic(domain_name)): # Проверяем домен на кирилицу
+            domain_name = lm.Cyrillic_to_Punycode_conversion(domain_name)
 
         if (lm.Domain_check(domain_name)):
             if (name_file[1] == "zip"):  # Проверяем расширение полученного файла и домен
