@@ -2,25 +2,39 @@ from flask import *
 import logic_modul as lm
 
 app = Flask(__name__)
+app.secret_key = b'_5#y2L"F4Q8z\n\xec]/'
 
-@app.route("/")
+
+@app.route("/", methods=['GET', 'POST'])
 def main_page():
+    # Главная страница
     return render_template('index.html')
 
-@app.route("/success", methods = ['POST'])
-def upload():
-    if request.method == 'POST': 
-        f = request.files['landing_zipped_file'] 
-        tp = f.filename.split(".")
-        if tp[1] == "zip":
-            f.save(f"pages/{f.filename}")
-            lm.Unzipping(f.filename)
-            if lm.index_file_search(f.filename):
-                return render_template("index.html", name = f.filename)
-        else:
-            return render_template("index.html", name = "Файл не правильного формата")
 
-    
+@app.route("/success", methods=['POST'])
+def upload():
+    if request.method == 'POST':
+        # Получение данных из HTML-формы
+        file = request.files['landing_zipped_file']
+        domain_name = request.form['domain_name']
+        name_file = file.filename.split(".")
+
+        if (lm.Domain_check(domain_name)):
+            if (name_file[1] == "zip"):  # Проверяем расширение полученного файла и домен
+                file.save(f"pages/{file.filename}")
+                lm.Unzipping(file.filename)  # Разархивирование
+
+                # Проверка на существование файла индексации
+                if lm.Finding_and_changing_index_file(file.filename):
+                    flash('Файл успешно загружен!', category='info')
+                    return render_template("index.html", name=file.filename)
+            else:
+                flash('Ошибка: Не верный формат файла', category='error')
+                return redirect(url_for('main_page'))
+        else:
+            flash('Ошибка: Не верный домен', category='error')
+            return redirect(url_for('main_page'))
+
 
 if __name__ == "__main__":
-    app.run(port=8566)
+    app.run(port=8000, debug=True)

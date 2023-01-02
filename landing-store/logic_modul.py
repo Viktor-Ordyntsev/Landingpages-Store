@@ -1,31 +1,74 @@
 import os
 import shutil
 import zipfile
+import socket
 
 
-def Unzipping(zip_filename):
-    extract_dir = 'pages'
+def Unzipping(zip_filename: str) -> bool:
+    """ Функция для разархивирование zip-файлов. Получает на вход название файла, 
+    в результате создается директория с таким же названием, Функция возращает булевое значение."""
+    try:
+        # Распаковка zip-файла
+        zf = zipfile.ZipFile(f"pages/{zip_filename}")
+        zf.extractall('pages')
 
-    zf = zipfile.ZipFile(f"pages/{zip_filename}")
-    zf.extractall(extract_dir)
-    #path = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'pages/__MACOSX')
-    #shutil.rmtree(path)
-    files = os.listdir("pages/")
-    for i in files:
-        if (i != zip_filename):
-            if (zip_filename.split(".")[0] in i):
-                os.rename(f"pages/{i}", f"pages/{zip_filename.split('.')[0]}")
+        # Удаление сервисной директории
+        shutil.rmtree(os.path.join(os.path.abspath(os.path.dirname(
+            __file__)), 'pages/__MACOSX'))
 
-def index_file_search(zip_filename):
-    dir_name = zip_filename.split(".")
-    dirname = f"pages/{dir_name[0]}"
-    files = os.listdir(dirname)
-    for i in files:
-        fl = i.split(".")
-        if(fl[0] == "index"):
+        # Исправление название дириктори
+        Files = os.listdir("pages/")
+        for file in Files:
+            if (file != zip_filename):
+                if (zip_filename.split(".")[0] in file):
+                    os.rename(f"pages/{file}",
+                              f"pages/{zip_filename.split('.')[0]}")
+                    return True
+    except:
+        return False
+
+
+def Finding_and_changing_index_file(zip_filename: str) -> bool:
+    """ Функция поиска и измение файла индексации. На вход получает название zip-файла. 
+    В результате, файл индексации именуется 'index'. Функия возвращяет булевое значение. """
+    try:
+        # Получаем путь к рабочей директории
+        directory = f"pages/{zip_filename.split('.')[0]}"
+
+        # Список всех файлов
+        Files = os.listdir(directory)
+
+        # Переименовываем файл индексации
+        for file in Files:
+            file_sp = file.split(".")
+            if (file_sp[0] == "index"):
+                return True
+            if ("page" in file_sp[0]):
+                os.rename(
+                    f"pages/{zip_filename.split('.')[0]}/{file}", f"pages/{zip_filename.split('.')[0]}/index.html")
+                return True
+    except:
+        return False
+
+
+def Domain_check(domain: str) -> bool:
+    """Функция для проверки привязанности доменна к серверу. 
+    На вход подается строка - имя домена.
+    На выходе булевое значение"""
+    try:
+        # Резолвим домен, получай ipv4
+        ip_v4_lst = socket.gethostbyname_ex(domain)
+
+        # Сравниваем с ip полученным из переменных окружения
+        if (os.environ["IP_ADDRESS"] in ip_v4_lst[2]):
             return True
-        if("page" in fl[0]):
-            os.rename(f"pages/{dir_name[0]}/{i}", f"pages/{dir_name[0]}/index.html")
-            return True
+        else:
+            return False
+    except:
+        return False
 
-Unzipping("laba_8.zip")
+
+# def Cyrillic_to_Punycode_conversion(Cyrillic_domain: str) -> str:
+#     return Cyrillic_domain.encode('idna').decode()
+
+# print(Cyrillic_to_Punycode_conversion('Лендинг.рф'))
