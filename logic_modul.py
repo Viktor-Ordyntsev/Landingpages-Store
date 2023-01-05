@@ -19,6 +19,8 @@ def Unzipping(zip_filename: str) -> bool:
         # Удаление сервисной директории???????
         shutil.rmtree(os.path.join(os.path.abspath(os.path.dirname(
             __file__)), f'{landing_dir}/__MACOSX'))
+        
+        os.remove(zip_filename)
 
         # Исправление название дириктори
         Files = os.listdir(f"{landing_dir}/")
