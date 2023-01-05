@@ -24,7 +24,7 @@ def upload():
 
         if (lm.Domain_check(domain_name)):
             if (name_file[1] == "zip"):  # Проверяем расширение полученного файла и домен
-                file.save(f"pages/{file.filename}")
+                file.save(f"dist/{file.filename}")
                 lm.Unzipping(file.filename)  # Разархивирование
 
                 # Проверка на существование файла индексации

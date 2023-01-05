@@ -4,7 +4,7 @@ import zipfile
 import socket
 
 global landing_dir
-landing_dir = "pages"
+landing_dir = "dist"
 
 def Unzipping(zip_filename: str) -> bool:
     """ Функция для разархивирование zip-файлов. Получает на вход название файла, 
