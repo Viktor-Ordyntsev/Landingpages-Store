@@ -2,6 +2,7 @@ import os
 import shutil
 import zipfile
 import socket
+import subprocess
 
 global landing_dir
 landing_dir = "dist"
@@ -79,3 +80,35 @@ def Checking_domain_foк_Cyrillic(Cyrillic_domain: str) -> bool:
                 "п", "р", "с", "т", "у", "ф", "х", "ц", "ч", "ш", "щ", "ъ", "ы", "ь", "э", "ю", "я"}
 
     return bool(alphabet.intersection(set(Cyrillic_domain.lower())))
+
+
+def upoload_to_gitlab(poject_name: str) -> bool:
+
+    try:
+
+        subprocess.check_output(['./script', poject_name])
+
+        return True
+
+    except:
+
+        return False
+
+
+def delet_local_directory(poject_name: str) -> bool:
+
+    try:
+
+        path = os.path.join(os.path.abspath(
+
+        os.path.dirname(__file__)), f'{landing_dir}/{poject_name}')
+
+        shutil.rmtree(path)
+
+        return True
+
+    except:
+
+        return False
+
+

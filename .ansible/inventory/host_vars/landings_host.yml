@@ -1,4 +1,0 @@
-ansible_host: 130.193.48.221
-ansible_port: 22
-ansible_ssh_user: deploy
-ansible_python_interpreter: /usr/bin/python3

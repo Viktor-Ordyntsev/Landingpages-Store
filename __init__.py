@@ -29,8 +29,17 @@ def upload():
 
                 # Проверка на существование файла индексации
                 if lm.Finding_and_changing_index_file(file.filename):
-                    flash('Файл успешно загружен!', category='info')
-                    return render_template("index.html", name=file.filename)
+                    if (lm.upoload_to_gitlab(name_file[0])):
+                        if (lm.delet_local_directory(name_file[0])):
+                            flash('Файл успешно загружен!', category='info')
+                            return redirect(url_for('main_page'))
+                        else:
+                            flash('Ошибка: Невозможно удалить локальную директорию', category='error')
+                            return redirect(url_for('main_page'))
+                    else:
+                        flash('Ошибка: Не удалось загрузить в удаленный репозиторий', category='error')
+                        return redirect(url_for('main_page'))
+
             else:
                 flash('Ошибка: Не верный формат файла', category='error')
                 return redirect(url_for('main_page'))
