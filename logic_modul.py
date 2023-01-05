@@ -7,6 +7,7 @@ import subprocess
 global landing_dir
 landing_dir = "dist"
 
+
 def Unzipping(zip_filename: str) -> bool:
     """ Функция для разархивирование zip-файлов. Получает на вход название файла, 
     в результате создается директория с таким же названием, Функция возращает булевое значение."""
@@ -83,32 +84,18 @@ def Checking_domain_foк_Cyrillic(Cyrillic_domain: str) -> bool:
 
 
 def upoload_to_gitlab(poject_name: str) -> bool:
-
     try:
-
         subprocess.check_output(['./script', poject_name])
-
         return True
-
     except:
-
         return False
 
 
 def delet_local_directory(poject_name: str) -> bool:
-
     try:
-
         path = os.path.join(os.path.abspath(
-
         os.path.dirname(__file__)), f'{landing_dir}/{poject_name}')
-
         shutil.rmtree(path)
-
         return True
-
     except:
-
         return False
-
-
