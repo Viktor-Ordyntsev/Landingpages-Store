@@ -75,10 +75,12 @@ def Domain_check(domain: str) -> bool:
 
 
 def Cyrillic_to_Punycode_conversion(Cyrillic_domain: str) -> str:
+    """Функция конвертации Кирилического домена в Punycode"""
     return Cyrillic_domain.encode('idna').decode()
 
 
 def Checking_domain_foк_Cyrillic(Cyrillic_domain: str) -> bool:
+    """Функция проверки на содержание Кирилиц в домене"""
     alphabet = {"а", "б", "в", "г", "д", "е", "ё", "ж", "з", "и", "й", "к", "л", "м", "н", "о",
                 "п", "р", "с", "т", "у", "ф", "х", "ц", "ч", "ш", "щ", "ъ", "ы", "ь", "э", "ю", "я"}
 
@@ -86,6 +88,7 @@ def Checking_domain_foк_Cyrillic(Cyrillic_domain: str) -> bool:
 
 
 def upoload_to_gitlab(poject_name: str) -> bool:
+    """Функция выгрузки локальной директории на удаленные репозиторий git """
     try:
         subprocess.check_output(['./script', poject_name])
         return True
@@ -94,6 +97,7 @@ def upoload_to_gitlab(poject_name: str) -> bool:
 
 
 def delet_local_directory(poject_name: str) -> bool:
+    """Функция удаления локальной директории"""
     try:
         path = os.path.join(os.path.abspath(
         os.path.dirname(__file__)), f'{landing_dir}/{poject_name}')
