@@ -1,5 +1,6 @@
 from flask import *
-import logic_modul as lm
+from moduls import logic_modul as lm
+
 
 app = Flask(__name__)
 app.secret_key = b'_5#y2L"F4Q8z\n\xec]/'
@@ -29,16 +30,18 @@ def upload():
 
                 # Проверка на существование файла индексации
                 if lm.Finding_and_changing_index_file(file.filename):
-                    if (lm.upoload_to_gitlab(name_file[0])):
-                        if (lm.delet_local_directory(name_file[0])):
-                            flash('Файл успешно загружен!', category='info')
-                            return redirect(url_for('main_page'))
-                        else:
-                            flash('Ошибка: Невозможно удалить локальную директорию', category='error')
-                            return redirect(url_for('main_page'))
-                    else:
-                        flash('Ошибка: Не удалось загрузить в удаленный репозиторий', category='error')
-                        return redirect(url_for('main_page'))
+                    flash('пока Все норм', category='info')
+                    return redirect(url_for('main_page'))
+                    # if (lm.upoload_to_gitlab(name_file[0])):
+                    #     if (lm.delet_local_directory(name_file[0])):
+                    #         flash('Файл успешно загружен!', category='info')
+                    #         return redirect(url_for('main_page'))
+                    #     else:
+                    #         flash('Ошибка: Невозможно удалить локальную директорию', category='error')
+                    #         return redirect(url_for('main_page'))
+                    # else:
+                    #     flash('Ошибка: Не удалось загрузить в удаленный репозиторий', category='error')
+                    #     return redirect(url_for('main_page'))
 
             else:
                 flash('Ошибка: Не верный формат файла', category='error')

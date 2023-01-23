@@ -41,7 +41,7 @@ def Finding_and_changing_index_file(zip_filename: str) -> bool:
         # Получаем путь к рабочей директории
         directory = f"{landing_dir}/{zip_filename.split('.')[0]}"
 
-        # Список всех файлов
+        # Список всех файлов    
         Files = os.listdir(directory)
 
         # Переименовываем файл индексации
