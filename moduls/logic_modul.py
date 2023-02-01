@@ -89,12 +89,7 @@ def Checking_domain_foк_Cyrillic(Cyrillic_domain: str) -> bool:
 
 def upoload_to_gitlab(poject_name: str) -> bool:
     """Функция выгрузки локальной директории на удаленные репозиторий git """
-    try:
-        subprocess.check_output(['./script', poject_name])
-        return True
-    except:
-        return False
-
+    pass
 
 def delet_local_directory(poject_name: str) -> bool:
     """Функция удаления локальной директории"""
