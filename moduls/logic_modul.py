@@ -6,7 +6,7 @@ import subprocess
 
 global landing_dir
 landing_dir = "dist"
-
+#test
 
 def Unzipping(zip_filename: str) -> bool:
     """ Функция для разархивирование zip-файлов. Получает на вход название файла, 
