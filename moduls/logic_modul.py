@@ -27,7 +27,7 @@ def Unzipping(zip_filename: str) -> bool:
 def Removing_service_directory(zip_filename: str):
     # Removing the service directory???????
     shutil.rmtree(os.path.join(os.path.abspath(os.path.dirname(__file__)), '../__MACOSX/'))
-    os.remove(f'/Users/a1/Downloads/Web/landing_py/landingpages-store/{zip_filename}')
+    os.remove(f'./{zip_filename}')
     print("removing")
 
 
@@ -89,30 +89,39 @@ def upoload_to_gitlab(poject_name: str, domain_name: str):
     import git
 
     repo_dir = 'repo/'
-    repo = git.Repo.clone_from('git@gitlab.e-queo.xyz:viktor_ordyntsev/landing-storage.git', repo_dir)
+    if not os. path. exists('./repo'): 
+        repo = git.Repo.clone_from('git@gitlab.e-queo.xyz:viktor_ordyntsev/landing-storage.git', repo_dir)
+    else:
+        repo = git.Repo('./repo')
     git = repo.git
+    try:
+        new_branch = repo.create_head(domain_name, 'HEAD~2')
+        repo.head.reference = new_branch
 
-    new_branch = repo.create_head(domain_name, 'HEAD~2')
-    repo.head.reference = new_branch
+        shutil.move(f'{poject_name}/', 'repo/')
+        os.rename(f'repo/{poject_name}', 'repo/dist')
 
-    shutil.move(f'{poject_name}/', 'repo/')
-    os.rename(f'repo/{poject_name}', 'repo/dist')
+    except:
+        git.checkout(domain_name)
+        shutil.rmtree('./repo/dist/')
+        shutil.move(f'{poject_name}/', 'repo/')
+        os.rename(f'repo/{poject_name}', 'repo/dist')
+
 
     get_ls_file = [i for i in os.listdir('repo/') if i[0] != '.']
 
     repo.index.add(get_ls_file)
     repo.index.commit(domain_name)
-
-    git.push('-u','origin','--all')
+    try:
+        git.push('--set-upstream', 'origin', domain_name, '-f')
+    except:
+        pass
     return True
 
 
 def delet_local_directory(poject_name: str) -> bool:
     """Delete local directory function"""
-    try:
-        path = os.path.join(os.path.abspath(os.path.dirname(__file__)), f'./{poject_name}')
-        shutil.rmtree(path)
-        shutil.rmtree(os.path.join(os.path.abspath(os.path.dirname(__file__)), './repo'))
-        return True
-    except:
-        return False
+    # path = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'rep')
+    shutil.rmtree('./repo/')
+    return True
+
