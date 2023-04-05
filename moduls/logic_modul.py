@@ -12,7 +12,7 @@ def Unzipping(zip_filename: str) -> bool:
     try:
         # Unzip the zip file
         zf = zipfile.ZipFile(f"./{zip_filename}")
-        zf.extractall('')
+        zf.extractall(f"./{zip_filename.split('.')[0]}")
 
 
         # Correction of the name of the directory
@@ -24,6 +24,7 @@ def Unzipping(zip_filename: str) -> bool:
                     return True
     except:
         return False
+
 def Removing_service_directory(zip_filename: str):
     # Removing the service directory???????
     shutil.rmtree(os.path.join(os.path.abspath(os.path.dirname(__file__)), '../__MACOSX/'))
@@ -63,7 +64,7 @@ def Domain_check(domain: str) -> bool:
         ip_v4_lst = socket.gethostbyname_ex(domain)
 
         # Compare with ip obtained from environment variables
-        if (os.environ["IP_ADDRESS"] in ip_v4_lst[2]):
+        if (os.environ["SERVER_IP_ADDRESS"] in ip_v4_lst[2]):
             return True
         else:
             return False
@@ -90,7 +91,7 @@ def upoload_to_gitlab(poject_name: str, domain_name: str):
 
     repo_dir = 'repo/'
     if not os. path. exists('./repo'): 
-        repo = git.Repo.clone_from('git@gitlab.e-queo.xyz:viktor_ordyntsev/landing-storage.git', repo_dir)
+        repo = git.Repo.clone_from(os.environ["GIT_REPO"], repo_dir)
     else:
         repo = git.Repo('./repo')
     git = repo.git

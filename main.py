@@ -27,7 +27,10 @@ def upload():
             if (name_file[1] == "zip"):  # We check the extension of the received file and the domain
                 file.save(f'./{file.filename}')
                 lm.Unzipping(file.filename)
-                lm.Removing_service_directory(file.filename)
+
+                # лишнее действие 
+                # lm.Removing_service_directory(file.filename)
+
                 # Checking for the existence of an index file
                 if lm.Finding_and_changing_index_file(file.filename):
                     if (lm.upoload_to_gitlab(name_file[0], domain_name)):
