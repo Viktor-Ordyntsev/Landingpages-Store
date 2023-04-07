@@ -32,7 +32,7 @@ def upload():
                 # lm.Removing_service_directory(file.filename)
 
                 # Checking for the existence of an index file
-                if lm.Finding_and_changing_index_file(file.filename):
+                if lm.Finding_and_changing_index_file(name_file[0]):
                     if (lm.upoload_to_gitlab(name_file[0], domain_name)):
                         if (lm.delet_local_directory(name_file[0])):
                             flash('File uploaded successfully!', category='info')
