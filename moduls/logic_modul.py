@@ -35,11 +35,6 @@ def unzipping(zip_filename: str) -> bool:
         logging.error(f"Unzipped file {name_file} failed")
         return False
 
-# def Removing_service_directory(zip_filename: str):
-#     # Removing the service directory???????
-#     shutil.rmtree(os.path.join(os.path.abspath(os.path.dirname(__file__)), '../__MACOSX/'))
-#     os.remove(f'./{zip_filename}')
-#     print("removing")
 
 
 def finding_and_changing_index_file(name_file: str) -> bool:
@@ -63,7 +58,7 @@ def finding_and_changing_index_file(name_file: str) -> bool:
                 logging.info(f"Successfully found and renamed index file")
                 return True
     except:
-        logging.info(f"Unsuccessfully found and renamed index file")
+        logging.warning(f"Unsuccessfully found and renamed index file")
         return False
 
 
@@ -97,87 +92,61 @@ def checking_domain_for_cyrillic(Cyrillic_domain: str) -> bool:
     """The function of checking for the content of Cyrillic in the domain"""
     alphabet = {"а", "б", "в", "г", "д", "е", "ё", "ж", "з", "и", "й", "к", "л", "м", "н", "о",
                 "п", "р", "с", "т", "у", "ф", "х", "ц", "ч", "ш", "щ", "ъ", "ы", "ь", "э", "ю", "я"}
+    logging.info("Domain checked for Cyrillic")
     return bool(alphabet.intersection(set(Cyrillic_domain.lower())))
 
 
-# def upoload_to_gitlab(poject_name: str, domain_name: str):
-#     """The function of uploading a local directory to remote git repositories """
-#     import git
+def upoload_to_s3(poject_name: str, domain_name: str) -> bool:
+    try:
+        # получаем данные из переменных окружения
+        S3_URL = os.getenv('S3_URL')
+        S3_BUCKET = os.getenv('S3_BUCKET')
+        S3_PREFIX = os.getenv('S3_PREFIX')
+        S3_ACCESSKEY = os.getenv('S3_ACCESSKEY')
+        S3_SECRETKEY = os.getenv('S3_SECRETKEY')
 
-#     repo_dir = 'repo/'
-#     if not os. path. exists('./repo'): 
-#         repo = git.Repo.clone_from(os.environ.get("GIT_REPO"), repo_dir)
-#         logging.info("Successful cloning of the repository")
-#     else:
-#         repo = git.Repo('./repo')
-#     git = repo.git
-#     try:
-#         new_branch = repo.create_head(domain_name, 'HEAD~2')
-#         repo.head.reference = new_branch
-#         shutil.move(f'{poject_name}/', 'repo/')
-#         os.rename(f'repo/{poject_name}', 'repo/dist')
-#         logging.info("Successful branch creation and data movement")
-#     except:
-#         logging.warning("Branch already exists")
-#         logging.info("Search for an existing branch")
-#         git.checkout(domain_name)
-#         shutil.rmtree('./repo/dist/')
-#         shutil.move(f'{poject_name}/', 'repo/')
-#         os.rename(f'repo/{poject_name}', 'repo/dist')
-
-#     get_ls_file = [i for i in os.listdir('repo/') if i[0] != '.']
-#     repo.index.add(get_ls_file)
-#     repo.index.commit(domain_name)
-#     logging.info("Successfully adding changes and commit")
-#     try:
-#         git.push('--set-upstream', 'origin', domain_name, '-f')
-#         logging.info("Successful push")
-#     except:
-#         logging.info("Unsuccessful push")
-#         pass
-#     return True
-def upoload_to_s3(poject_name: str, domain_name: str):
-    # получаем данные из переменных окружения
-    S3_URL = os.getenv('S3_URL')
-    S3_BUCKET = os.getenv('S3_BUCKET')
-    S3_PREFIX = os.getenv('S3_PREFIX')
-    S3_ACCESSKEY = os.getenv('S3_ACCESSKEY')
-    S3_SECRETKEY = os.getenv('S3_SECRETKEY')
-
-    # создаем клиент s3
-    s3_client = boto3.client('s3',
-                            endpoint_url=S3_URL,
-                            aws_access_key_id=S3_ACCESSKEY,
-                            aws_secret_access_key=S3_SECRETKEY)
+        # создаем клиент s3
+        s3_client = boto3.client('s3',
+                                endpoint_url=S3_URL,
+                                aws_access_key_id=S3_ACCESSKEY,
+                                aws_secret_access_key=S3_SECRETKEY)
+        logging.info("Successful client creation or environment variable import")
+    except:
+        logging.warning("Unsuccessful client creation or environment variable import")
 
 
     # проверяем, есть ли уже файлы в S3_BUCKET/S3_PREFIX/DOMAIN_NAME/
     # если есть, то делаем бекап и удаляем текущую директорию
-    existing_files = []
-    for key in s3_client.list_objects(Bucket=S3_BUCKET, Prefix=f'{S3_PREFIX}/{domain_name}/')['Contents']: 
-        existing_files.append(key['Key'])
-        
-    if domain_name in existing_files:
-        backup_prefix = S3_PREFIX + '/backup/' 
-        for file in existing_files:
-            s3_client.copy_object(Bucket=S3_BUCKET, CopySource={'Bucket': 'BUCKET_NAME', 'Key': file}, Key=backup_prefix + os.path.basename(file))
-            s3_client.delete_object(Bucket=S3_BUCKET, Key=file)
-   
+    # print(s3_client.list_objects(Bucket=S3_BUCKET, Prefix=f'{S3_PREFIX}/{domain_name}/')['Contents'])
+    try:
+        existing_files = []
+        for key in s3_client.list_objects(Bucket=S3_BUCKET, Prefix=f'{S3_PREFIX}/{domain_name}/')['Contents']: 
+            existing_files.append(key['Key'])
 
+        if len(existing_files) > 1:
+            backup_prefix = S3_PREFIX + '/backup/'
+            for file in existing_files:
+                s3_client.copy_object(Bucket=S3_BUCKET, CopySource={'Bucket': S3_BUCKET, 'Key': file}, Key=backup_prefix + "/".join(file.split('/')[1:]))
+                s3_client.delete_object(Bucket=S3_BUCKET, Key=file)
+            logging.info("Successful backup update")
+    except KeyError:
+        logging.info("No items found for this domain")
+    
     # загружаем новые файлы
     for root, dirs, files in os.walk(f'tmp/{poject_name}/'):
         for filename in files:
             local_path = os.path.join(root, filename)
-            relative_path = os.path.relpath(local_path, f'tmp/')
+            relative_path = os.path.relpath(local_path, f'tmp/{poject_name}/')
             s3_path = os.path.join(f'{S3_PREFIX}/{domain_name}/', relative_path)
             s3_client.upload_file(local_path, S3_BUCKET, s3_path)
-    
+    logging.info("Successful loading of the landing in the storage")
     return True
 
 
 def delet_local_directory(poject_name: str) -> bool:
     """Delete local directory function"""
     # path = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'rep')
-    shutil.rmtree('./repo/')
+    shutil.rmtree(f'./tmp/{poject_name}')
+    logging.info("Cleaning up the local directory")
     return True
 

@@ -34,8 +34,12 @@ def upload():
                 # Checking for the existence of an index file
                 if lm.finding_and_changing_index_file(name_file[0]):
                     if (lm.upoload_to_s3(name_file[0], domain_name)):
-                        flash('File uploaded successfully!', category='info')
-                        return redirect(url_for('main_page'))
+                        if (lm.delet_local_directory(name_file[0])):
+                            flash('File uploaded successfully!', category='info')
+                            return redirect(url_for('main_page'))
+                        else:
+                            flash('Error: Unable to delete local directory', category='error')
+                            return redirect(url_for('main_page'))
                     else:
                         flash('Error: Failed to upload to remote repository', category='error')
                         return redirect(url_for('main_page'))
