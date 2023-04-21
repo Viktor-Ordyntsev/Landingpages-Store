@@ -20,26 +20,22 @@ def upload():
         domain_name = request.form['domain_name']
         name_file = file.filename.split(".")
         
-        if (lm.Checking_domain_for_Cyrillic(domain_name)):
-            domain_name = lm.Cyrillic_to_Punycode_conversion(domain_name)
+        if (lm.checking_domain_for_cyrillic(domain_name)):
+            domain_name = lm.cyrillic_to_punycode_conversion(domain_name)
 
-        if (lm.Domain_check(domain_name)):
+        if (lm.domain_check(domain_name)):
             if (name_file[1] == "zip"):  # We check the extension of the received file and the domain
-                file.save(f'./{file.filename}')
-                lm.Unzipping(file.filename)
+                file.save(f'./tmp/{file.filename}')
+                lm.unzipping(file.filename)
 
                 # лишнее действие 
                 # lm.Removing_service_directory(file.filename)
 
                 # Checking for the existence of an index file
-                if lm.Finding_and_changing_index_file(name_file[0]):
-                    if (lm.upoload_to_gitlab(name_file[0], domain_name)):
-                        if (lm.delet_local_directory(name_file[0])):
-                            flash('File uploaded successfully!', category='info')
-                            return redirect(url_for('main_page'))
-                        else:
-                            flash('Error: Unable to delete local directory', category='error')
-                            return redirect(url_for('main_page'))
+                if lm.finding_and_changing_index_file(name_file[0]):
+                    if (lm.upoload_to_s3(name_file[0], domain_name)):
+                        flash('File uploaded successfully!', category='info')
+                        return redirect(url_for('main_page'))
                     else:
                         flash('Error: Failed to upload to remote repository', category='error')
                         return redirect(url_for('main_page'))
