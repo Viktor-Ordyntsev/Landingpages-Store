@@ -1,3 +1,4 @@
+import os
 from flask import *
 from moduls import logic_modul as lm
 
@@ -25,26 +26,26 @@ def upload():
 
         if (lm.domain_check(domain_name)):
             if (name_file[1] == "zip"):  # We check the extension of the received file and the domain
+                os.mkdir('tmp')
                 file.save(f'./tmp/{file.filename}')
-                lm.unzipping(file.filename)
-
-                # лишнее действие 
-                # lm.Removing_service_directory(file.filename)
-
-                # Checking for the existence of an index file
-                if lm.finding_and_changing_index_file(name_file[0]):
-                    if (lm.upoload_to_s3(name_file[0], domain_name)):
-                        if (lm.delet_local_directory(name_file[0])):
-                            flash('File uploaded successfully!', category='info')
-                            return redirect(url_for('main_page'))
+                if (lm.unzipping(file.filename)):
+                    # Checking for the existence of an index file
+                    if lm.finding_and_changing_index_file(name_file[0]):
+                        if (lm.upoload_to_s3(name_file[0], domain_name)):
+                            if (lm.delet_local_directory()):
+                                flash('File uploaded successfully!', category='info')
+                                return redirect(url_for('main_page'))
+                            else:
+                                flash('Error: Unable to delete local directory', category='error')
+                                return redirect(url_for('main_page'))
                         else:
-                            flash('Error: Unable to delete local directory', category='error')
+                            flash('Error: Failed to upload to remote repository', category='error')
                             return redirect(url_for('main_page'))
                     else:
-                        flash('Error: Failed to upload to remote repository', category='error')
+                        flash('Error: Index file not found! Check if the file has the format "index.html" or "pageXXXXXXX.html"', category='error')
                         return redirect(url_for('main_page'))
                 else:
-                    flash('Error: Index file not found! Check if the file has the format "index.html" or "pageXXXXXXX.html"', category='error')
+                    flash('Unzipped file failed', category='error')
                     return redirect(url_for('main_page'))
             else:
                 flash('Error: Invalid file format! Must be a zip archive', category='error')

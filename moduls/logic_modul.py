@@ -15,24 +15,26 @@ logging.basicConfig(level=logging.INFO, filename="landing_log.log",filemode="w",
 def unzipping(zip_filename: str) -> bool:
     """ Function for unzipping zip files. Gets the name of the file as input
      as a result, a directory with the same name is created. The function returns a boolean value."""
+    
     try:
-        # Unzip the zip file
         zf = zipfile.ZipFile(f"./tmp/{zip_filename}") 
         name_file = zip_filename.split('.')[0]
         zf.extractall(f"./tmp/{name_file}")
         os.remove(f'./tmp/{zip_filename}')
 
-
-        # Correction of the name of the directory
-        Files = os.listdir(f'{name_file}')
-        for file in Files:
-            if (file != zip_filename):
-                if (name_file in file):
-                    os.rename(f"./{file}",f"./{name_file}")
-                    logging.info(f"Successfully unzipped file {name_file}")
-                    return True
+        # This piece of code is needed because of the peculiarities of archiving different operating systems
+        Files = os.listdir(f'tmp/{name_file}/')
+        if len(Files) == 2:
+            Files = os.listdir(f'tmp/{name_file}/{name_file}/')
+            for file in Files:
+                os.rename(f'tmp/{name_file}/{name_file}/{file}', f'tmp/{name_file}/{file}')
+            shutil.rmtree(f'./tmp/{name_file}/{name_file}')
+            
+        logging.info(f"Successfully unzipped file {name_file}")
+        return True
     except:
         logging.error(f"Unzipped file {name_file} failed")
+        delet_local_directory()
         return False
 
 
@@ -59,6 +61,7 @@ def finding_and_changing_index_file(name_file: str) -> bool:
                 return True
     except:
         logging.warning(f"Unsuccessfully found and renamed index file")
+        delet_local_directory()
         return False
 
 
@@ -98,41 +101,37 @@ def checking_domain_for_cyrillic(Cyrillic_domain: str) -> bool:
 
 def upoload_to_s3(poject_name: str, domain_name: str) -> bool:
     try:
-        # получаем данные из переменных окружения
+        # getting data from environment variables
         S3_URL = os.getenv('S3_URL')
         S3_BUCKET = os.getenv('S3_BUCKET')
         S3_PREFIX = os.getenv('S3_PREFIX')
         S3_ACCESSKEY = os.getenv('S3_ACCESSKEY')
         S3_SECRETKEY = os.getenv('S3_SECRETKEY')
 
-        # создаем клиент s3
-        s3_client = boto3.client('s3',
-                                endpoint_url=S3_URL,
-                                aws_access_key_id=S3_ACCESSKEY,
-                                aws_secret_access_key=S3_SECRETKEY)
+        # create S3-client
+        s3_client = boto3.client('s3', endpoint_url=S3_URL, aws_access_key_id=S3_ACCESSKEY, aws_secret_access_key=S3_SECRETKEY)
         logging.info("Successful client creation or environment variable import")
     except:
         logging.warning("Unsuccessful client creation or environment variable import")
 
-
-    # проверяем, есть ли уже файлы в S3_BUCKET/S3_PREFIX/DOMAIN_NAME/
-    # если есть, то делаем бекап и удаляем текущую директорию
-    # print(s3_client.list_objects(Bucket=S3_BUCKET, Prefix=f'{S3_PREFIX}/{domain_name}/')['Contents'])
     try:
+        #check if there are already files in S3_BUCKET/S3_PREFIX/DOMAIN_NAME/
         existing_files = []
         for key in s3_client.list_objects(Bucket=S3_BUCKET, Prefix=f'{S3_PREFIX}/{domain_name}/')['Contents']: 
             existing_files.append(key['Key'])
 
         if len(existing_files) > 1:
             backup_prefix = S3_PREFIX + '/backup/'
-            for file in existing_files:
-                s3_client.copy_object(Bucket=S3_BUCKET, CopySource={'Bucket': S3_BUCKET, 'Key': file}, Key=backup_prefix + "/".join(file.split('/')[1:]))
-                s3_client.delete_object(Bucket=S3_BUCKET, Key=file)
-            logging.info("Successful backup update")
+
+        for file in existing_files:
+            s3_client.delete_object(Bucket=S3_BUCKET, Key= backup_prefix + "/".join(file.split('/')[1:]))
+            s3_client.copy_object(Bucket=S3_BUCKET, CopySource={'Bucket': S3_BUCKET, 'Key': file}, Key=backup_prefix + "/".join(file.split('/')[1:]))
+            s3_client.delete_object(Bucket=S3_BUCKET, Key=file)
+        logging.info("Successful backup update")
     except KeyError:
         logging.info("No items found for this domain")
-    
-    # загружаем новые файлы
+
+    # uploads new file
     for root, dirs, files in os.walk(f'tmp/{poject_name}/'):
         for filename in files:
             local_path = os.path.join(root, filename)
@@ -140,13 +139,29 @@ def upoload_to_s3(poject_name: str, domain_name: str) -> bool:
             s3_path = os.path.join(f'{S3_PREFIX}/{domain_name}/', relative_path)
             s3_client.upload_file(local_path, S3_BUCKET, s3_path)
     logging.info("Successful loading of the landing in the storage")
+
+    write_list_folders(list_folders(s3_client, S3_BUCKET, S3_PREFIX))
+    s3_client.upload_file('domain_list.txt', S3_BUCKET, f'{S3_PREFIX}/domain_list.txt')
+    os.remove('domain_list.txt')
     return True
 
 
-def delet_local_directory(poject_name: str) -> bool:
+def list_folders(s3_client, bucket_name: str, s3_prefix: str):
+    response = s3_client.list_objects_v2(Bucket=bucket_name, Prefix=f'{s3_prefix}/', Delimiter='/')
+    for content in response.get('CommonPrefixes', []):
+        yield content.get('Prefix')
+
+
+def write_list_folders(folder_list: list):
+    f = open('domain_list.txt', 'w')
+    for folder in folder_list:
+        f.write(str(folder).split("/")[1] + '\n')
+
+
+def delet_local_directory() -> bool:
     """Delete local directory function"""
-    # path = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'rep')
-    shutil.rmtree(f'./tmp/{poject_name}')
+
+    shutil.rmtree(f'./tmp/')
     logging.info("Cleaning up the local directory")
     return True
 
